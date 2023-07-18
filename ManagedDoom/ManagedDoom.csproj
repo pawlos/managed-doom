@@ -6,7 +6,7 @@
     <AssemblyName>managed-doom</AssemblyName>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
-    <PublishAot>true</PublishAot>
+    <PublishAot>false</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
     <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
@@ -23,6 +23,7 @@
     <PackageReference Include="Silk.NET.Input.Glfw" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Windowing.Glfw" Version="2.22.0" />
     <PackageReference Include="TrippyGL" Version="1.2.2" />
+    <PackageReference Include="StreamDeckSharp" Version="10.0.0" />
   </ItemGroup>
 
 </Project>

@@ -20,7 +20,7 @@ using System.Collections.Generic;
 
 namespace ManagedDoom.Video
 {
-    public sealed class DrawScreen
+    public class DrawScreen
     {
         private int width;
         private int height;
@@ -107,7 +107,7 @@ namespace ManagedDoom.Video
             }
         }
 
-        private void DrawColumn(Column[] source, int x, int y, int scale)
+        protected virtual void DrawColumn(Column[] source, int x, int y, int scale)
         {
             var step = Fixed.One / scale;
 
