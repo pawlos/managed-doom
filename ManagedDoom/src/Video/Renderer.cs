@@ -16,7 +16,10 @@
 
 
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
+using OpenMacroBoard.SDK;
+using StreamDeckSharp;
 
 namespace ManagedDoom.Video
 {
@@ -50,7 +53,7 @@ namespace ManagedDoom.Video
         private OpeningSequenceRenderer openingSequence;
         private AutoMapRenderer autoMap;
         private FinaleRenderer finale;
-
+        private IMacroBoard deck;
         private Patch pause;
 
         private int wipeBandWidth;
@@ -93,6 +96,9 @@ namespace ManagedDoom.Video
             wipeBuffer = new byte[screen.Data.Length];
 
             palette.ResetColors(gammaCorrectionParameters[config.video_gammacorrection]);
+
+            deck = StreamDeck.OpenDevice(null);
+            deck.SetBrightness(100);
         }
 
         public void RenderDoom(Doom doom, Fixed frameFrac)
@@ -213,6 +219,7 @@ namespace ManagedDoom.Video
             }
 
             WriteData(colors, destination);
+            ElgatoWriteData(destination);
         }
 
         private void RenderWipe(Doom doom, byte[] destination)
@@ -244,6 +251,7 @@ namespace ManagedDoom.Video
             RenderMenu(doom);
 
             WriteData(palette[0], destination);
+            ElgatoWriteData(destination);
         }
 
         public void InitializeWipe()
@@ -259,6 +267,46 @@ namespace ManagedDoom.Video
             {
                 p[i] = colors[screenData[i]];
             }
+        }
+
+        private void ElgatoWriteData(byte[] destination)
+        {
+            var p = MemoryMarshal.Cast<byte, uint>(destination);
+            var d = p.ToArray().Select(x => ((x & 255) << 16) | ((x >> 8) & 255) << 8 | ((x >> 16) & 255)).ToArray();
+            var screenData = MemoryMarshal.Cast<uint, byte>(d).ToArray();
+            byte[] data = screenData.Where((_, i) => i % 4 != 3).Select(b => b).ToArray();
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    var buttonData = Copy(data, i, j, 5);
+                    var faceBitmap = new KeyBitmap(128, 128, buttonData);
+
+                    deck.SetKeyBitmap(i * 5 + j, faceBitmap);
+                }
+            }
+        }
+
+        private byte[] Copy(byte[] allData, int y, int x, int n)
+        {
+            const int oneBox = 128 * 128 * 3;
+            var result = new byte[oneBox];
+            for (int i = 0; i < 128; i++)
+            {
+                var line = new byte[128 * 3];
+                for (int j = 0; j < 128; j++)
+                {
+                    var off = j * Height * 3 + Height * 3 *128 * x + y * 3 * 128;
+                    var k = j * 3;
+                    line[k] = allData[off + i*3];
+                    line[k + 1] = allData[off + i*3 + 1];
+                    line[k + 2] = allData[off + i*3 + 2];
+                }
+
+                Array.Copy(line, 0, result, i * 128 * 3, 128 * 3);
+            }
+
+            return result;
         }
 
         private static int GetPaletteNumber(Player player)
